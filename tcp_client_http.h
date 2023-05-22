@@ -1,0 +1,1 @@
+const char *http_api(const char *ip_adress);

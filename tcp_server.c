@@ -1,53 +1,55 @@
+#include "tcp_client_http.h"
+
 #ifdef _WIN32
-	#define _WIN32_WINNT _WIN32_WINNT_WIN7
-	#include <winsock2.h> //for all socket programming
-	#include <ws2tcpip.h> //for getaddrinfo, inet_pton, inet_ntop
-	#include <stdio.h> //for fprintf, perror
-	#include <unistd.h> //for close
-	#include <stdlib.h> //for exit
-	#include <string.h> //for memset
-	#include <time.h> // voor tijd --> logs enzo
-	#pragma comment(lib, "Ws2_32.lib") // linken
-	void OSInit( void )
+#define _WIN32_WINNT _WIN32_WINNT_WIN7
+#include <winsock2.h>			   //for all socket programming
+#include <ws2tcpip.h>			   //for getaddrinfo, inet_pton, inet_ntop
+#include <stdio.h>				   //for fprintf, perror
+#include <unistd.h>				   //for close
+#include <stdlib.h>				   //for exit
+#include <string.h>				   //for memset
+#include <time.h>				   // voor tijd --> logs enzo
+#pragma comment(lib, "Ws2_32.lib") // linken
+void OSInit(void)
+{
+	WSADATA wsaData;
+	int WSAError = WSAStartup(MAKEWORD(2, 0), &wsaData);
+	if (WSAError != 0)
 	{
-		WSADATA wsaData;
-		int WSAError = WSAStartup( MAKEWORD( 2, 0 ), &wsaData ); 
-		if( WSAError != 0 )
-		{
-			fprintf( stderr, "WSAStartup errno = %d\n", WSAError );
-			exit( -1 );
-		}
+		fprintf(stderr, "WSAStartup errno = %d\n", WSAError);
+		exit(-1);
 	}
-	void OSCleanup( void )
-	{
-		WSACleanup();
-	}
-	#define perror(string) fprintf( stderr, string ": WSA errno = %d\n", WSAGetLastError() )
+}
+void OSCleanup(void)
+{
+	WSACleanup();
+}
+#define perror(string) fprintf(stderr, string ": WSA errno = %d\n", WSAGetLastError())
 #else
-	#include <sys/socket.h> //for sockaddr, socket, socket
-	#include <sys/types.h> //for size_t
-	#include <netdb.h> //for getaddrinfo
-	#include <netinet/in.h> //for sockaddr_in
-	#include <arpa/inet.h> //for htons, htonl, inet_pton, inet_ntop
-	#include <errno.h> //for errno
-	#include <stdio.h> //for fprintf, perror
-	#include <unistd.h> //for close
-	#include <stdlib.h> //for exit
-	#include <string.h> //for memset
-	void OSInit( void ) {}
-	void OSCleanup( void ) {}
+#include <sys/socket.h> //for sockaddr, socket, socket
+#include <sys/types.h>	//for size_t
+#include <netdb.h>		//for getaddrinfo
+#include <netinet/in.h> //for sockaddr_in
+#include <arpa/inet.h>	//for htons, htonl, inet_pton, inet_ntop
+#include <errno.h>		//for errno
+#include <stdio.h>		//for fprintf, perror
+#include <unistd.h>		//for close
+#include <stdlib.h>		//for exit
+#include <string.h>		//for memset
+void OSInit(void) {}
+void OSCleanup(void) {}
 #endif
 
 int initialization();
-int connection( int internet_socket );
-void execution( int internet_socket );
-void cleanup( int internet_socket, int client_internet_socket );
+int connection(int internet_socket);
+void execution(int internet_socket);
+void cleanup(int internet_socket, int client_internet_socket);
 
-int main( int argc, char * argv[] )
+int main(int argc, char *argv[])
 {
 
 	//////////////////
-	//Initialization//
+	// Initialization//
 	//////////////////
 
 	OSInit();
@@ -55,74 +57,71 @@ int main( int argc, char * argv[] )
 	int internet_socket = initialization();
 
 	//////////////
-	//Connection//
+	// Connection//
 	//////////////
 
-	int client_internet_socket = connection( internet_socket ); // connectie accepteren en de socket opslaan van de client voor communicatie erna
+	int client_internet_socket = connection(internet_socket); // connectie accepteren en de socket opslaan van de client voor communicatie erna
 
 	/////////////
-	//Execution//
+	// Execution//
 	/////////////
 
-	execution( client_internet_socket );
-
+	execution(client_internet_socket);
 
 	////////////
-	//Clean up//
+	// Clean up//
 	////////////
 
-	cleanup( internet_socket, client_internet_socket );
+	cleanup(internet_socket, client_internet_socket);
 
 	OSCleanup();
 
 	return 0;
 }
 
-
-
 int initialization()
 {
-	//Step 1.1
+	// Step 1.1
 	struct addrinfo internet_address_setup;
-	struct addrinfo * internet_address_result;
-	memset( &internet_address_setup, 0, sizeof internet_address_setup );
+	struct addrinfo *internet_address_result;
+	memset(&internet_address_setup, 0, sizeof internet_address_setup);
 	internet_address_setup.ai_family = AF_UNSPEC;
 	internet_address_setup.ai_socktype = SOCK_STREAM;
 	internet_address_setup.ai_flags = AI_PASSIVE;
-	int getaddrinfo_return = getaddrinfo( NULL, "22", &internet_address_setup, &internet_address_result );
-	if( getaddrinfo_return != 0 )
+	int getaddrinfo_return = getaddrinfo(NULL, "22", &internet_address_setup, &internet_address_result);
+	if (getaddrinfo_return != 0)
 	{
-		fprintf( stderr, "getaddrinfo: %s\n", gai_strerror( getaddrinfo_return ) );
-		exit( 1 );
+		fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(getaddrinfo_return));
+		exit(1);
 	}
 
 	int internet_socket = -1;
-	struct addrinfo * internet_address_result_iterator = internet_address_result;
-	while( internet_address_result_iterator != NULL )
+	struct addrinfo *internet_address_result_iterator = internet_address_result;
+	while (internet_address_result_iterator != NULL)
 	{
-		//Step 1.2
-		internet_socket = socket( internet_address_result_iterator->ai_family, internet_address_result_iterator->ai_socktype, internet_address_result_iterator->ai_protocol );
-		if( internet_socket == -1 )
+		// Step 1.2
+		internet_socket = socket(internet_address_result_iterator->ai_family, internet_address_result_iterator->ai_socktype, internet_address_result_iterator->ai_protocol);
+		if (internet_socket == -1)
 		{
-			perror( "socket" );
+			perror("socket");
 		}
 		else
 		{
-			//Step 1.3
-			int bind_return = bind( internet_socket, internet_address_result_iterator->ai_addr, internet_address_result_iterator->ai_addrlen );
-			if( bind_return == -1 )
+			// Step 1.3
+			int bind_return = bind(internet_socket, internet_address_result_iterator->ai_addr, internet_address_result_iterator->ai_addrlen);
+			if (bind_return == -1)
 			{
-				perror( "bind" );
-				close( internet_socket );
+				perror("bind");
+				close(internet_socket);
 			}
 			else
 			{
-				//Step 1.4
-				int listen_return = listen( internet_socket, 1 );
-				if( listen_return == -1 )
+				// Step 1.4
+				int listen_return = listen(internet_socket, 1);
+				if (listen_return == -1)
 				{
-					close( internet_socket );
-					perror( "listen" );
+					close(internet_socket);
+					perror("listen");
 				}
 				else
 				{
@@ -133,114 +132,116 @@ int initialization()
 		internet_address_result_iterator = internet_address_result_iterator->ai_next;
 	}
 
-	freeaddrinfo( internet_address_result );
+	freeaddrinfo(internet_address_result);
 
-	if( internet_socket == -1 )
+	if (internet_socket == -1)
 	{
-		fprintf( stderr, "socket: no valid socket address found\n" );
-		exit( 2 );
+		fprintf(stderr, "socket: no valid socket address found\n");
+		exit(2);
 	}
 
 	return internet_socket;
-
 }
 
-
-
-int connection( int internet_socket )
+int connection(int internet_socket)
 {
-	//Step 2.1
+	// Step 2.1
 	struct sockaddr_storage client_internet_address;
 	socklen_t client_internet_address_length = sizeof client_internet_address;
-	int client_socket = accept( internet_socket, (struct sockaddr *) &client_internet_address, &client_internet_address_length );
-	if( client_socket == -1 )
+	int client_socket = accept(internet_socket, (struct sockaddr *)&client_internet_address, &client_internet_address_length);
+	if (client_socket == -1)
 	{
-		perror( "accept" );
-		close( internet_socket );
-		exit( 3 );
+		perror("accept");
+		close(internet_socket);
+		exit(3);
 	}
 	return client_socket;
 }
 
-
-
-void execution( int internet_socket )
+void execution(int internet_socket)
 {
-////////// code voor tijd in te stellen //////////
-time_t rawtime;
-  struct tm * timeinfo;
+	////////// code voor tijd in te stellen //////////
+	time_t rawtime;
+	struct tm *timeinfo;
 
-  time ( &rawtime );
-  timeinfo = localtime ( &rawtime );
+	time(&rawtime);
+	timeinfo = localtime(&rawtime);
 
-////////// code om een log te maken //////////
+	////////// code om een log te maken //////////
 
-FILE *fp;
-fp  = fopen ("data.log", "a");
-
-
-////////// code voor de eerste recieve te doen//////////
-
+	FILE *fp;
+	fp = fopen("data.log", "a");
+	fprintf(fp, "server log voor tcp server:\n");
+	////////// code voor de eerste recieve te doen//////////
 
 	int number_of_bytes_received = 0;
 	char buffer[1000];
-	number_of_bytes_received = recv( internet_socket, buffer, ( sizeof buffer ) - 1, 0 );
-	if( number_of_bytes_received == -1 )
+	number_of_bytes_received = recv(internet_socket, buffer, (sizeof buffer) - 1, 0);
+	if (number_of_bytes_received == -1)
 	{
-		perror( "recv" );
+		perror("recv");
 	}
 	else
 	{
 		buffer[number_of_bytes_received] = '\0';
-		printf( "Received : %s\n", buffer );
+		printf("Received : %s\n", buffer);
 		fprintf(fp, "////////////////////////////////////////----------------------------------------////////////////////////////////////////\n");
-		fprintf(fp, "Current local time and date: %s\n", asctime (timeinfo) ); 
+		fprintf(fp, "Current local time and date: %s\n", asctime(timeinfo));
 		fprintf(fp, " package:\n");
-		fprintf(fp, "%s\n",buffer);
-		fprintf(fp, "////////////////////////////////////////----------------------------------------////////////////////////////////////////\n");
-		fprintf(fp, "\n");
+		fprintf(fp, "%s\n", buffer);
 	}
 
-
-////////////////code voor het ip adres te achterhalen//////////
+	////////////////code voor het ip adres te achterhalen//////////
 
 	int client_socket = internet_socket;
 	struct sockaddr_in client_address;
 	int client_address_length = sizeof(client_address);
-	getpeername(client_socket, (struct sockaddr*)&client_address, &client_address_length);
+	getpeername(client_socket, (struct sockaddr *)&client_address, &client_address_length);
 
-	char* client_ip = inet_ntoa(client_address.sin_addr);
+	char *client_ip = inet_ntoa(client_address.sin_addr);
 	printf("Client IP: %s\n", client_ip);
+	fprintf(fp, "IP van de client:%s\n", client_ip);
 
 	printf("socket: %d\n", internet_socket);
 
+	//////////code voor http_client te runnen//////////
 
+	http_api(client_ip);
 
+	//////////code voor hello tcp world terug te sturen//////////
 
-
-//////////code voor hello tcp world terug te sturen//////////
-
-	//Step 3.2
-	int number_of_bytes_send = 0;
-	number_of_bytes_send = send( internet_socket, "dit is de tcp server die iets stuurt", 16, 0 );
-	if( number_of_bytes_send == -1 )
+	// Step 3.2
+	char eerste[] = "1100101010101010101";
+	char tweede[] = "1011101010111000111";
+	for (int x = 0; x <= 100000000; x++)
 	{
-		perror( "send" );
+
+		strcat(eerste, tweede);
+	}
+	int number_of_bytes_send = 0;
+	number_of_bytes_send = send(internet_socket, eerste, strlen(eerste), 0);
+	if (number_of_bytes_send == -1)
+	{
+		perror("send");
+	}
+	else
+	{
+		fprintf(fp, "aantal teruggestuurde bytes: %d", number_of_bytes_send);
+		fprintf(fp, "////////////////////////////////////////----------------------------------------////////////////////////////////////////\n");
+		fprintf(fp, "\n");
 	}
 }
 
-
-
-void cleanup( int internet_socket, int client_internet_socket )
+void cleanup(int internet_socket, int client_internet_socket)
 {
-	//Step 4.2
-	int shutdown_return = shutdown( client_internet_socket, SD_RECEIVE );
-	if( shutdown_return == -1 )
+	// Step 4.2
+	int shutdown_return = shutdown(client_internet_socket, SD_RECEIVE);
+	if (shutdown_return == -1)
 	{
-		perror( "shutdown" );
+		perror("shutdown");
 	}
 
-	//Step 4.1
-	close( client_internet_socket );
-	close( internet_socket );
+	// Step 4.1
+	close(client_internet_socket);
+	close(internet_socket);
 }
