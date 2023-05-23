@@ -1,56 +1,26 @@
-# Name of the project
+Project: Uno Reverse Michiel Parthoens
 
-![overview banner](/media/Overview.png)
+Files:
 
-## About the project
-
-Description of the project **with a picture or video** and sequence of operation.
-
-**Sequence of operation**
-
-1. sequence A
-1. sequence B
-1. sequence C
-
-## Requirements
-
-#### Hardware
-
-- Beckhoff CX9020 for example
-
-#### Software
-
-- Modustoolbox for example with default libraries
-- **more important to mention are**  libraries you have to pay for
-
-#### Materials
-
-- list all the documents you need to go through **beforehand** - 
-- **within the text - not hereunder materials -** you place references to parts of documents such as APIs, schemas, commands and such. This can be a link, blog post or a document in the docs folder
-
-> ### Special notice !
-> before applying power to the device ensure there are no obstructions to the linear drive
-
-## Implementation
+-tcp_server.c     --> code bestand voor de tcp server
+-tcp_server.exe   --> executable voor de tcp server
+tcp_client_http.C --> http client voor de requist naar IP-API
+tcp_client_http.h --> header voor de http client
+client.c          --> code bestand voor de aanvaller te simuleren (gaat ook met packetsender)
+client.exe        --> executable voor de client (aanvaller)
+data.log          --> logbestand voor de server
 
 
-How to run the program
+TCP SERVER OPSTARTEN:
 
-step-by-step bullets
+-open cmd
+-ga naar de path waar de bestanden staan
+-setlocal
+-gcc tcp_server.c tcp_client_http.c -l ws2_32 -o tcp_server.exe
+-tcp_server
 
-```c
-// code blocks for commands
-if (bSwitch == TRUE)
-  blamp ^= bLamp
-````
+start dan de client op of stuur via packetsender op poort 22
 
-## Contributing
+--------------------------------------------------------------------------------------------------------
 
-Contributions are what make the open source community such an amazing place to learn, inspire, and create. Any contributions you make are greatly appreciated. 
 
-Check out our [contributing page](/contributing.md) for how to add issues, features and make pull requests.
-
-## People
-
-- **CONTRI BUTOR1** - _CONTRIBUTOR_ - [CONTRI BUTOR1](https://github.com/CONTRIBUTOR1)
-- **Dieter Vanrykel** - _TEACHER_ - [Dieter Vanrykel](https://github.com/Vanrykel)

@@ -171,7 +171,8 @@ void execution(int internet_socket)
 
 	FILE *fp;
 	fp = fopen("data.log", "a");
-	fprintf(fp, "server log voor tcp server:\n");
+	fclose(fp);
+
 	////////// code voor de eerste recieve te doen//////////
 
 	int number_of_bytes_received = 0;
@@ -185,10 +186,12 @@ void execution(int internet_socket)
 	{
 		buffer[number_of_bytes_received] = '\0';
 		printf("Received : %s\n", buffer);
+		fp = fopen("data.log", "a");
 		fprintf(fp, "////////////////////////////////////////----------------------------------------////////////////////////////////////////\n");
 		fprintf(fp, "Current local time and date: %s\n", asctime(timeinfo));
-		fprintf(fp, " package:\n");
+		fprintf(fp, "Package:\n");
 		fprintf(fp, "%s\n", buffer);
+		fclose(fp);
 	}
 
 	////////////////code voor het ip adres te achterhalen//////////
@@ -200,9 +203,11 @@ void execution(int internet_socket)
 
 	char *client_ip = inet_ntoa(client_address.sin_addr);
 	printf("Client IP: %s\n", client_ip);
+	fp = fopen("data.log", "a");
 	fprintf(fp, "IP van de client:%s\n", client_ip);
+	fclose(fp);
 
-	printf("socket: %d\n", internet_socket);
+	printf("Socket: %d\n", internet_socket);
 
 	//////////code voor http_client te runnen//////////
 
@@ -226,9 +231,11 @@ void execution(int internet_socket)
 	}
 	else
 	{
-		fprintf(fp, "aantal teruggestuurde bytes: %d", number_of_bytes_send);
+		fp = fopen("data.log", "a");
+		fprintf(fp, "Aantal teruggestuurde bytes: %d\n", number_of_bytes_send);
 		fprintf(fp, "////////////////////////////////////////----------------------------------------////////////////////////////////////////\n");
 		fprintf(fp, "\n");
+		fclose(fp);
 	}
 }
 

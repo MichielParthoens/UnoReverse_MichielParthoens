@@ -41,7 +41,7 @@ void httpclient_cleanup(int internet_socket);
 
 const char *http_api(const char *ip_adress)
 {
-    printf("vanaf hier is het http client\n");
+
     //////////////////
     // Initialization//
     //////////////////
@@ -75,7 +75,7 @@ int httpclient_initialization()
     memset(&internet_address_setup, 0, sizeof internet_address_setup);
     internet_address_setup.ai_family = AF_UNSPEC;
     internet_address_setup.ai_socktype = SOCK_STREAM;
-    int getaddrinfo_return = getaddrinfo("::1", "80", &internet_address_setup, &internet_address_result);
+    int getaddrinfo_return = getaddrinfo("208.95.112.1", "80", &internet_address_setup, &internet_address_result);
     if (getaddrinfo_return != 0)
     {
         fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(getaddrinfo_return));
@@ -88,6 +88,7 @@ int httpclient_initialization()
     {
         // Step 1.2
         internet_socket = socket(internet_address_result_iterator->ai_family, internet_address_result_iterator->ai_socktype, internet_address_result_iterator->ai_protocol);
+
         if (internet_socket == -1)
         {
             perror("socket");
@@ -122,13 +123,24 @@ int httpclient_initialization()
 
 void httpclient_execution(int internet_socket, const char *ip_adress)
 {
+
     // Step 2.1
-    char first[] = "GET / HTTP/1.1\r\nHost: http://ip-api.com/json";
-    const char third[] = "\r\n\r\n";
-    strcat(first, ip_adress);
-    strcat(first, third);
+    char first[] = "GET /json/";
+    char third[] = " HTTP/1.1\r\nHost: ip-api.com\r\nAccept: application/json\r\n\r\n";
+    // override van het ip adres voor te testen
+    // ip_adress = "84.192.107.138";
+
+    int string_length = strlen(first) + strlen(third) + strlen(ip_adress);
+    char http_header[string_length];
+    strcat(http_header, first);
+    strcat(http_header, ip_adress);
+    strcat(http_header, third);
+    // werkende test met ip dat als voorbeeld gebruikt wordt op ip-api.com
+    //     char first[] = "GET /json/84.192.107.138 HTTP/1.1\r\nHost: ip-api.com\r\nAccept: application/json\r\n\r\n";
+
     int number_of_bytes_send = 0;
-    number_of_bytes_send = send(internet_socket, "GET / HTTP/1.1\r\nHost: http://ip-api.com/json/192.168.1.216\r\n\r\n", strlen(first), 0);
+
+    number_of_bytes_send = send(internet_socket, http_header, strlen(http_header), 0);
     if (number_of_bytes_send == -1)
     {
         perror("send");
@@ -137,7 +149,9 @@ void httpclient_execution(int internet_socket, const char *ip_adress)
     // Step 2.2
     int number_of_bytes_received = 0;
     char buffer[1000];
+
     number_of_bytes_received = recv(internet_socket, buffer, (sizeof buffer) - 1, 0);
+
     if (number_of_bytes_received == -1)
     {
         perror("recv");
@@ -147,6 +161,43 @@ void httpclient_execution(int internet_socket, const char *ip_adress)
         buffer[number_of_bytes_received] = '\0';
         printf("Received : %s\n", buffer);
     }
+    char resultaat[strlen(buffer)];
+    int y = 0;
+    int x = 0;
+    while (buffer[x] != '{')
+    {
+        x++;
+    }
+    for (x; x <= strlen(buffer); x++)
+    {
+        if (buffer[x] == '{' || buffer[x] == '}')
+        {
+            continue;
+        }
+        else if (buffer[x] == '\"')
+        {
+            while (buffer[x] != '\"')
+            {
+                resultaat[y] = buffer[x];
+                y++;
+                x++;
+            }
+        }
+        else if (buffer[x] == ',')
+        {
+            resultaat[y] = '\n';
+            y++;
+        }
+        else
+        {
+            resultaat[y] = buffer[x];
+            y++;
+        }
+    }
+    FILE *fp;
+    fp = fopen("data.log", "a");
+    fprintf(fp, "\nJSON RESPONSE: \n%s", resultaat);
+    fclose(fp);
 }
 
 void httpclient_cleanup(int internet_socket)
