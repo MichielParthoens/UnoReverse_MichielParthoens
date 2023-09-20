@@ -15,7 +15,7 @@
 			fprintf( stderr, "WSAStartup errno = %d\n", WSAError );
 			exit( -1 );
 		}
-	}
+	} //test
 	void OSCleanup( void )
 	{
 		WSACleanup();
